@@ -1,0 +1,53 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(janitor)
+
+general_data <- read_csv("../raw_data/scottish_health_survey_general.csv") %>% 
+  clean_names()
+```
+```{r}
+names(general_data)
+dim(general_data)
+glimpse(general_data)
+head(general_data)
+```
+#Need to lower obs and filter year
+```{r}
+general_clean_data <- general_data %>% 
+  rename(year = date_code) %>% 
+  mutate(measurement = str_to_lower(measurement)) %>% 
+  mutate(units = str_to_lower(units)) %>% 
+  mutate(scottish_health_survey_indicator = str_to_lower(scottish_health_survey_indicator)) %>%  
+  rename(surveys = scottish_health_survey_indicator) %>% 
+  mutate(sex = str_to_lower(sex))
+
+general_clean_data
+```
+#Choose surveys only related to alcohol and remove feature code as it is all Scotland
+```{r}
+general_alc_data <- general_clean_data %>% 
+  select(-1) %>% 
+  mutate(interest = str_detect(surveys, c("alcohol", "self", "questionnaire"))) %>%
+  filter(interest == TRUE) %>% 
+  select(-7) %>% 
+  filter(units != "percent of children")
+
+general_alc_data
+```
+#Left alcohol related response, self-assessed health (physical health) and 
+general health questionnaire (mental health) for further analysis.
+All food related and dentistry problems, etc. were removed.
+
+```{r}
+unique(general_clean_data$surveys) 
+unique(general_alc_data$surveys)
+```
+```{r}
+write_csv(general_alc_data, "clean_general_data_national.csv")
+```
+

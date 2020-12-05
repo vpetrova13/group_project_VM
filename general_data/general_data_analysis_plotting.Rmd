@@ -1,0 +1,190 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+
+general_data <- read_csv("clean_general_data_national.csv")
+head(general_data)
+```
+#Alcohol general
+Alcohol units
+Not enough data for alcohol consumption (only 3 years)
+```{r}
+general_data %>% 
+  mutate(interest = str_detect(surveys, "alcohol")) %>% 
+  filter(interest == TRUE) %>% 
+  filter(measurement == "mean") %>% 
+  ggplot() +
+  aes(x = year, y = value, fill = sex) +
+  geom_col(position = "dodge") +
+  scale_x_continuous(breaks = c(2008: 2018))
+```
+#Percent of people
+```{r}
+general_data %>% 
+  mutate(interest = str_detect(surveys, "alcohol")) %>% 
+  filter(interest == TRUE) %>% 
+  filter(measurement == "percent") %>% 
+  ggplot() +
+  aes(x = year, y = value, fill = sex) +
+  geom_col(position = "dodge") +
+  scale_x_continuous(breaks = c(2009:2019)) +
+  facet_wrap(~surveys)
+```
+```{r}
+general_data %>% 
+  mutate(interest = str_detect(surveys, "alcohol")) %>% 
+  filter(interest == TRUE) %>% 
+  filter(measurement == "95% lower confidence limit" | measurement == "95% upper confidence limit") %>% 
+  filter(units == "percent of adults") %>% 
+  ggplot() +
+  aes(x = year, y = value, fill = sex) +
+  geom_col(position = "dodge") +
+  facet_grid(measurement ~ surveys) +
+  scale_x_continuous(breaks = c(2008:2019))
+```
+```{r}
+general_data %>% 
+  mutate(interest = str_detect(surveys, "alcohol")) %>% 
+  filter(interest == TRUE) %>% 
+  filter(measurement == "95% lower confidence limit" | measurement == "95% upper confidence limit") %>% 
+  filter(units == "percent of adults") %>% 
+  filter(sex != "all") %>% 
+  ggplot() +
+  aes(x = year, color = surveys) +
+  geom_point(aes(y = value, group = surveys))
+  scale_x_continuous(breaks = c(2007:2019))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#Physical health
+```{r}
+general_data %>% 
+  mutate(interest = str_detect(surveys, "self")) %>% 
+  filter(interest == TRUE)  %>% 
+  filter(measurement == "percent") %>% 
+  mutate(surveys = str_remove_all(surveys, "^self\\-assessed\\ general\\ health\\:")) %>% 
+  ggplot() +
+  aes(x = year) +
+  geom_line(aes(y = value, group = surveys, colour = surveys)) +
+  geom_point(aes(y = value, group = surveys, colour = surveys)) +
+  scale_x_continuous(breaks = c(2009:2019)) +
+  labs(
+    title = "Self-assessed general health",
+    x = "Year",
+    y = "Percent"
+  ) +
+  facet_wrap(~sex) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+```
+```{r}
+general_data %>% 
+  mutate(interest = str_detect(surveys, "self")) %>% 
+  filter(interest == TRUE) %>%  
+  filter(measurement == "95% lower confidence limit" | measurement == "95% upper confidence limit") %>% 
+  group_by(year, sex, surveys) %>% 
+  summarise(avg = mean(value)) %>% 
+  mutate(surveys = str_remove_all(surveys, "^self\\-assessed\\ general\\ health\\:")) %>% 
+  ggplot() +
+  aes(x = year, colour = surveys) +
+  geom_point(aes(y= avg, group = surveys)) +
+  geom_line(aes(y = avg, group = surveys)) +
+  facet_wrap(~sex) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  scale_x_continuous(breaks = c(2009:2019)) +
+  labs(
+    title = "Self-assessed general health",
+    x = "Year",
+    y = "Average (percent)"
+  )
+```
+
+
+```{r}
+general_data %>% 
+  mutate(interest = str_detect(surveys, "self")) %>% 
+  filter(interest == TRUE) %>%  
+  filter(measurement == "95% lower confidence limit" | measurement == "95% upper confidence limit") %>% 
+  mutate(surveys = str_remove_all(surveys, "^self\\-assessed\\ general\\ health\\:")) %>% 
+  ggplot() +
+  aes(x = year, colour = surveys) +
+  geom_point(aes(y= value, group = surveys)) +
+  facet_wrap(~sex) +
+  scale_x_continuous(breaks = c(2009:2019)) 
+```
+
+
+#Mental health 
+```{r}
+general_data %>% 
+  mutate(interest = str_detect(surveys, "questionnaire")) %>% 
+  filter(interest == TRUE) %>% 
+  filter(measurement == "percent")%>% 
+  mutate(surveys = str_remove_all(surveys, "^general\\ health\\ questionnaire\\ \\(ghq\\-12\\):")) %>% 
+  ggplot() +
+  aes(x = year) +
+  geom_line(aes(y = value, group = surveys, colour = surveys)) +
+  geom_point(aes(y = value, group = surveys, colour = surveys)) +
+  scale_x_continuous(breaks = c(2009:2019)) +
+  labs(
+    title = "General Health Questionnaire response",
+    x = "Year",
+    y = "Percent"
+  ) +
+  facet_wrap(~sex) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+```
+```{r}
+general_data %>% 
+  mutate(interest = str_detect(surveys, "questionnaire")) %>% 
+  filter(interest == TRUE) %>%  
+  filter(measurement == "95% lower confidence limit" | measurement == "95% upper confidence limit") %>% 
+  group_by(year, sex, surveys) %>% 
+  summarise(avg = mean(value)) %>% 
+  mutate(surveys = str_remove_all(surveys, "^general\\ health\\ questionnaire\\ \\(ghq\\-12\\):")) %>% 
+  ggplot() +
+  aes(x = year, colour = surveys) +
+  geom_point(aes(y= avg, group = surveys)) +
+  geom_line(aes(y = avg, group = surveys)) +
+  facet_wrap(~sex) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  scale_x_continuous(breaks = c(2009:2019)) +
+  labs(
+    title = "General Health Questionnaire response",
+    x = "Year",
+    y = "Percent"
+  ) 
+```
+
+
