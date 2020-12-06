@@ -1,0 +1,152 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+
+alc_data <- read_csv("alcohol_cleaning_data.csv")
+```
+```{r}
+head(alc_data)
+```
+```{r}
+alc_data %>% 
+  filter(alcohol_condition == "all mental & behavioural disorders due to use of alcohol (m&b)"| alcohol_condition == "all alcoholic liver disease (ald)" |
+           alcohol_condition == "all alcohol conditions" ) %>% 
+  filter(type_of_hospital == "general acute hospital") %>% 
+  filter(hospital_activity != "average stays per patient", 
+         hospital_activity != "stays") %>% 
+  group_by(year, alcohol_condition, hospital_activity) %>% 
+  summarise(avg = median(value))  %>% 
+  ggplot() +
+  aes(x = year) +
+  geom_col(aes(y = avg, group = hospital_activity, fill = hospital_activity)) +
+  facet_wrap(~alcohol_condition) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  labs(
+    title = "Number of patients in general acute hospital",
+    x = "Year",
+    y = "Count"
+  ) 
+  
+```
+```{r}
+alc_data %>% 
+  filter(alcohol_condition %in% c("toxic effects of alcohol", "alcoholic cardiomyopathy", "alcohol related brain damage", "alcohol-induced pancreatitis", "alcoholic gastritis")) %>% 
+  group_by(year, alcohol_condition)  %>% 
+  filter(hospital_activity == "stays", type_of_hospital == "general acute hospital") %>% 
+  summarise(avg = median(value)) %>% 
+  ggplot() +
+  aes(x = year) +
+  geom_col(aes(y = avg, group = alcohol_condition, fill = alcohol_condition))  +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  labs(
+    title = "Reasons of stays in general acute hospital",
+    x = "Year",
+    y = "Stays (days)"
+  ) +
+  facet_wrap(~alcohol_condition, nrow = 1) +
+  theme(legend.position = "none")
+```
+```{r}
+alc_data %>% 
+  filter(alcohol_condition %in% c("toxic effects of alcohol", "alcoholic cardiomyopathy", "alcohol related brain damage", "alcohol-induced pancreatitis", "alcoholic gastritis")) %>% 
+  group_by(year, alcohol_condition) %>% 
+  filter(hospital_activity == "average stays per patient", type_of_hospital == "general acute hospital") %>% 
+  ggplot() +
+  aes(x = year) +
+  geom_col(aes(y = value, group = alcohol_condition, fill = alcohol_condition))  +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  labs(
+    title = "Average stays per patient by different reason",
+    x = "Year",
+    y = "Average stays per patient (days)"
+  ) 
+```
+
+```{r}
+alc_data %>% 
+  filter(measurement == "mean") %>% 
+  filter(alcohol_condition == "all mental & behavioural disorders due to use of alcohol (m&b)"| alcohol_condition == "all alcoholic liver disease (ald)" |
+           alcohol_condition == "all alcohol conditions" ) %>% 
+  ggplot() +
+  aes(x = year) +
+  geom_col(aes(y = value, fill = alcohol_condition, group = alcohol_condition)) + facet_wrap(~type_of_hospital) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) 
+```
+```{r}
+alc_data %>% 
+  mutate(interest = str_detect(alcohol_condition, "ald")) %>% 
+  filter(interest == TRUE) %>% 
+  group_by(year, alcohol_condition)  %>% 
+  filter(hospital_activity != "stays", type_of_hospital == "general acute hospital") %>% 
+  summarise(avg = median(value)) %>%
+  mutate(alcohol_condition = str_remove_all(alcohol_condition, "ald\\ \\-\\ ")) %>% 
+  ggplot() +
+  aes(x = year) +
+  geom_col(aes(y = avg, group = alcohol_condition, fill = alcohol_condition))  +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  labs(
+    title = "Average stays in general acute hospital",
+    x = "Year",
+    y = "Stays (days)"
+  ) +
+  facet_wrap(~alcohol_condition, nrow = 1) +
+  theme(legend.position = "none")
+```
+```{r}
+alc_data %>% 
+  mutate(interest = str_detect(alcohol_condition, "m\\&b")) %>% 
+  filter(interest == TRUE) %>% 
+  group_by(year, alcohol_condition)  %>% 
+  filter(hospital_activity != "stays", type_of_hospital == "general acute hospital") %>% 
+  summarise(avg = median(value)) %>%
+  mutate(alcohol_condition = str_remove_all(alcohol_condition, "m\\&b\\ \\-\\ ")) %>% 
+  ggplot() +
+  aes(x = year) +
+  geom_col(aes(y = avg, group = alcohol_condition, fill = alcohol_condition))  +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  labs(
+    title = "Average stays in general acute hospital",
+    x = "Year",
+    y = "Stays (days)"
+  ) +
+  facet_wrap(~alcohol_condition, nrow = 1) +
+  theme(legend.position = "none")
+```
+
+
+```{r}
+unique(alc_data$alcohol_condition)
+```
+```{r}
+library(sf)
+
+nhs_health_boards <- st_read("../raw_data/SG_NHS_HealthBoards_2019/SG_NHS_HealthBoards_2019.shp")
+
+head(nhs_health_boards)
+```
+```{r}
+both_data <- left_join(alc_data, nhs_health_boards, by = c("feature_code" = "HBCode"))
+```
+
+```{r}
+both_data %>% 
+  filter(units == "mean") %>% 
+  ggplot() +
+  aes(fill = value) +
+  geom_sf() +
+  theme_bw()
+```
+
+
+
+
