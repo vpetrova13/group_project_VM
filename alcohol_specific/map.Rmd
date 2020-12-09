@@ -1,0 +1,39 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(sf)
+
+alc <- read_csv("alcohol_cleaning_data.csv")
+health_board <- st_read("../raw_data/SG_NHS_HealthBoards_2019/SG_NHS_HealthBoards_2019.shp", quiet = TRUE)
+
+head(health_board)
+  
+```
+```{r}
+health_board_simply <- simplify(health_board)
+head(health_board_simply)
+```
+```{r}
+plot(health_board_simply)
+```
+```{r}
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(rgeos)
+world <- ne_countries(scale = "medium", returnclass = "sf")
+```
+```{r}
+country_scotland<- world %>% 
+  filter(name == "United Kingdom")
+```
+```{r}
+ggplot(country_scotland) +
+  geom_sf() +
+  ggtitle(country_scotland$name)
+```
+
+

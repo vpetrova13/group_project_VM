@@ -17,7 +17,8 @@ head(alc_raw_data)
 ```
 ```{r}
 alc_data <- alc_raw_data %>% 
-  filter(date_code %in% c("2016/2017","2011/2012","2012/2013", "2010/2011", "2015/2016", "2009/2010", "2014/2015", "2018/2019", "2017/2018", "2013/2014")) %>% 
+  filter(date_code %in% c("2016/2017","2011/2012","2012/2013", "2010/2011", "2015/2016", "2009/2010", "2014/2015", "2018/2019", "2017/2018", "2013/2014")) %>%
+  filter(feature_code == "S92000003") %>% 
   rename(year = date_code) %>% 
   mutate(measurement = str_to_lower(measurement)) %>% 
   mutate(units = str_to_lower(units)) %>% 

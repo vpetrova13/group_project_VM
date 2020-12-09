@@ -1,0 +1,153 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+
+general_data <- read_csv("sex_age_clean_data.csv")
+head(general_data)
+```
+```{r}
+general_data  %>% 
+  filter(admission_type == "All Inpatients and Daycases") %>% 
+  filter(sex != "All Sexes") %>% 
+  filter(!is.na(age_factor)) %>% 
+  mutate(age_factor = factor(age, levels = c("0-4 years", "5-9 years", "10-14 years", "15-19 years", "20-24 years", "25-29 years", "30-34 years", "35-39 years", "40-44 years", "45-49 years",  "50-54 years", "55-59 years", "60-64 years", "65-69 years", "70-74 years","75-79 years", "80-84 years", "85-89 years", "90 years and over"))) %>% 
+  filter(financial_year == "2010/11") %>% 
+  ggplot() +
+  aes(x = age_factor) +
+  geom_col(aes(y = average_lengthof_episode_rate, fill = sex)) +
+  facet_wrap(~sex) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  labs(
+    title = "Average length of episode",
+    x = "Year",
+    y = "Days"
+  ) +
+  theme(legend.position = "none")
+```
+```{r}
+general_data  %>% 
+  filter(admission_type == "All Inpatients and Daycases") %>% 
+  filter(sex != "All Sexes") %>% 
+  filter(!is.na(age_factor)) %>% 
+  mutate(age_factor = factor(age, levels = c("0-4 years", "5-9 years", "10-14 years", "15-19 years", "20-24 years", "25-29 years", "30-34 years", "35-39 years", "40-44 years", "45-49 years",  "50-54 years", "55-59 years", "60-64 years", "65-69 years", "70-74 years","75-79 years", "80-84 years", "85-89 years", "90 years and over"))) %>% 
+  filter(financial_year == "2010/11") %>% 
+  ggplot() +
+  aes(x = age_factor) +
+  geom_col(aes(y = average_lengthof_stay_rate, fill = sex)) +
+  facet_wrap(~sex) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  labs(
+   title = "Average length of stays",
+    x = "Year",
+    y = "Days"
+  )  +
+  theme(legend.position = "none")
+```
+```{r}
+general_data  %>% 
+  filter(admission_type == "All Inpatients and Daycases") %>% 
+  filter(sex != "All Sexes") %>% 
+  filter(!is.na(age_factor)) %>% 
+  mutate(age_factor = factor(age, levels = c("0-4 years", "5-9 years", "10-14 years", "15-19 years", "20-24 years", "25-29 years", "30-34 years", "35-39 years", "40-44 years", "45-49 years",  "50-54 years", "55-59 years", "60-64 years", "65-69 years", "70-74 years","75-79 years", "80-84 years", "85-89 years", "90 years and over"))) %>% 
+  filter(financial_year == "2012/13") %>% 
+  ggplot() +
+  aes(x = age_factor) +
+  geom_col(aes(y = average_lengthof_stay_rate, fill = sex), position = "dodge")  +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  labs(
+   title = "Scottish average length of stay per 100,000 population",
+    x = "Ages",
+    y = "Number of stays",
+   fill = "Gender"
+  ) 
+```
+
+```{r}
+general_data %>% 
+  filter(sex == "All Sexes") %>% 
+  filter(age == "All Ages") %>% 
+  filter(admission_type != "All Inpatients and Daycases", admission_type != "Day case") %>% 
+  mutate(age_factor = factor(age, levels = c("0-4 years", "5-9 years", "10-14 years", "15-19 years", "20-24 years", "25-29 years", "30-34 years", "35-39 years", "40-44 years", "45-49 years",  "50-54 years", "55-59 years", "60-64 years", "65-69 years", "70-74 years","75-79 years", "80-84 years", "85-89 years", "90 years and over", "Under 18 years", "65 years and over", "75 years and over", "85 years and over", "All Ages"))) %>% 
+  ggplot() +
+  aes(x = financial_year) +
+  geom_col(aes(y = average_lengthof_stay_rate, fill = admission_type)) +
+  facet_wrap(~admission_type, nrow = 1) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  labs(
+    title = "Scottish average length of stay per 100,000 population",
+    x = "Year",
+    y = "Number of stays",
+    fill = "Admission Type"
+  ) + theme(legend.position = "none")
+```
+```{r}
+general_data %>% 
+  filter(sex == "All Sexes") %>% 
+  filter(age == "All Ages") %>% 
+  filter(admission_type != "All Inpatients and Daycases", admission_type != "Day case") %>% 
+  ggplot() +
+  aes(x = financial_year) +
+  geom_col(aes(y = average_lengthof_episode_rate, fill = admission_type)) +
+  facet_wrap(~admission_type, nrow = 1) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  labs(
+    title = "Average length of episode per 100,000 population",
+    x = "Year",
+    y = "Days"
+  ) 
+```
+```{r}
+general_data  %>% 
+  filter(admission_type == "All Inpatients and Daycases") %>% 
+  filter(sex != "All Sexes") %>% 
+  filter(age == "20-24 years") %>% 
+  filter(financial_year == "2010/11") %>% 
+  ggplot() +
+  aes(x = "") +
+  geom_col(aes(y = stays, fill = sex), color = "white", position = "fill")  +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  labs(
+   title = "Stays",
+    x = "Year",
+    y = "Days"
+  )  + coord_polar("y", start=0)  +
+  scale_y_continuous(labels = scales::percent) +
+  theme_classic()
+```
+```{r}
+general_data  %>% 
+  filter(admission_type == "All Inpatients and Daycases") %>% 
+  filter(sex != "All Sexes") %>% 
+  filter(age == "20-24 years") %>% 
+  filter(financial_year == "2010/11") %>% 
+  ggplot() +
+  aes(x = age_factor) +
+  geom_col(aes(y = patients, fill = sex), position = "fill")  +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  labs(
+   title = "Patients",
+    x = "Year",
+    y = "Days"
+  )  + coord_polar("y", start=0) +
+  theme_minimal() + 
+  scale_y_continuous(labels = scales::percent)
+```
+
+
+
+```{r}
+unique(general_data$age)
+```
+
+

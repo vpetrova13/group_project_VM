@@ -146,6 +146,18 @@ both_data %>%
   geom_sf() +
   theme_bw()
 ```
+```{r}
+library(tidyverse)
+library(sf)
+nhs_health_boards <- st_read("SG_NHS_HealthBoards_2019.shp")
+head(nhs_health_boards)
+```
+```{r}
+attr(nhs_health_boards, "sf_column")
+```
+```{r}
+plot(nhs_health_boards[1])
+```
 
 
 
