@@ -7,33 +7,203 @@ output: html_notebook
 library(tidyverse)
 library(sf)
 
-alc <- read_csv("alcohol_cleaning_data.csv")
+alc <- read_csv("~/Downloads/clean_alcohol_codes.csv")
 health_board <- st_read("../raw_data/SG_NHS_HealthBoards_2019/SG_NHS_HealthBoards_2019.shp", quiet = TRUE)
 
 head(health_board)
   
 ```
 ```{r}
-health_board_simply <- simplify(health_board)
+health_board_simply <- st_simplify(health_board, dTolerance = 2000)
 head(health_board_simply)
 ```
 ```{r}
 plot(health_board_simply)
 ```
 ```{r}
-library(rnaturalearth)
-library(rnaturalearthdata)
-library(rgeos)
-world <- ne_countries(scale = "medium", returnclass = "sf")
+both_data <- full_join(alc, health_board_simply, by = c("feature_code" = "HBCode"))
+
+both_health_data <- both_data %>% 
+  filter(feature_code != "S92000003")
+
+both_health_data
 ```
-```{r}
-country_scotland<- world %>% 
-  filter(name == "United Kingdom")
-```
-```{r}
-ggplot(country_scotland) +
+```{r} 
+both_health_data %>% 
+  filter(date_code == "2013/2014") %>% 
+  ggplot(aes(fill = value_per_one_hundred_thousand_people,
+                                    geometry = geometry)) +
   geom_sf() +
-  ggtitle(country_scotland$name)
+  theme_void() + 
+  scale_fill_viridis_c(option = "plasma", trans = "sqrt") +
+  labs(
+      fill = "Stays per 100,000 population"
+  )
+```
+```{r}
+data_zone <- read_csv("~/Downloads/Datazone2011lookup.csv")
+names(data_zone)
+```
+```{r}
+new_hb <- data_zone %>% 
+  select(LA_Code, LA_Name, HB_Code, HB_Name)
+
+new_hb
+```
+```{r}
+alc_raw_data <- read_csv("../raw_data/alcohol_related_hospital_stats.csv") %>% 
+  clean_names()
+alc_data <- alc_raw_data %>% 
+  filter(date_code %in% c("2016/2017","2011/2012","2012/2013", "2010/2011", "2015/2016", "2009/2010", "2014/2015", "2018/2019", "2017/2018", "2013/2014"))  %>% 
+  rename(year = date_code) %>% 
+  mutate(measurement = str_to_lower(measurement)) %>% 
+  mutate(units = str_to_lower(units)) %>%  
+  rename(hospital_activity = alcohol_related_hospital_activity) %>% 
+  mutate(hospital_activity = str_to_lower(hospital_activity)) %>% 
+  mutate(type_of_hospital = str_to_lower(type_of_hospital)) %>% 
+  mutate(year = factor(year, levels = c("2009/2010", "2010/2011", "2011/2012", "2012/2013", "2013/2014", "2014/2015", "2015/2016", "2016/2017", "2017/2018",  "2018/2019")))
+
+alc_data 
+```
+```{r}
+alc_clean <- alc_data %>% 
+  filter(measurement == "ratio") %>% 
+  filter(hospital_activity == "stays")
+
+alc_clean
+both_alc_data <- inner_join(alc_clean, new_hb, by = c("feature_code" = "LA_Code"))
+both_alc_data
+```
+```{r}
+super_puper_data <- distinct(both_alc_data)
+super_puper_data
+```
+
+```{r}
+super_duper_data <- alc_data %>% 
+  mutate(hb_assign = case_when(
+                               feature_code == "S12000033" ~ "S08000020",
+                               feature_code == "S12000034" ~ "S08000020",
+                               feature_code == "S12000041" ~ "S08000030",
+                               feature_code == "S12000035" ~ "S08000022",
+                               feature_code == "S12000005" ~ "S08000019",
+                               feature_code == "S12000006" ~ "S08000017",
+                               feature_code == "S12000042" ~ "S08000030",
+                               feature_code == "S12000008" ~ "S08000015",
+                               feature_code == "S12000045" ~ "S08000031",
+                               feature_code == "S12000010" ~ "S08000024",
+                               feature_code == "S12000011" ~ "S08000031",
+                               feature_code == "S12000036" ~ "S08000024",
+                               feature_code == "S12000013" ~ "S08000028",
+                               feature_code == "S12000014" ~ "S08000019",
+                               feature_code == "S12000047" ~ "S08000029",
+                               feature_code == "S12000049" ~ "S08000031",
+                               feature_code == "S12000017" ~ "S08000022",
+                               feature_code == "S12000018" ~ "S08000031",
+                               feature_code == "S12000019" ~ "S08000024",
+                               feature_code == "S12000020" ~ "S08000020",
+                               feature_code == "S12000021" ~ "S08000015",
+                               feature_code == "S12000050" ~ "S08000032",
+                               feature_code == "S12000023" ~ "S08000025",
+                               feature_code == "S12000048" ~ "S08000030",
+                               feature_code == "S12000038" ~ "S08000031",
+                               feature_code == "S12000026" ~ "S08000016",
+                               feature_code == "S12000027" ~ "S08000026",
+                               feature_code == "S12000028" ~ "S08000015",
+                               feature_code == "S12000029" ~ "S08000032",
+                               feature_code == "S12000030" ~ "S08000019",
+                               feature_code == "S12000039" ~ "S08000031",
+                               feature_code == "S12000040" ~ "S08000024"))
+```
+
+```{r}
+final_data <- super_duper_data  %>% 
+  filter(!is.na(hb_assign))  %>% 
+  filter(hospital_activity == "stays") %>%
+      filter(alcohol_condition != "All alcohol conditions", alcohol_condition != 
+               "All mental & behavioural disorders due to use of alcohol (M&B)",
+             alcohol_condition != "All Alcoholic Liver Disease (ALD)") %>% 
+  mutate(alcohol_condition = str_remove_all(alcohol_condition, "M\\&B\\ \\-\\ ")) %>% 
+  mutate(alcohol_condition = str_remove_all(alcohol_condition, "ALD\\ \\-\\ ")) %>%
+  filter(type_of_hospital == "general acute hospital")
+```
+
+
+```{r}
+unique(final_data$measurement)
+```
+```{r}
+final_data %>% 
+      filter(year == "2013/2014") %>%
+      filter(hb_assign == "S08000031") %>% 
+      filter(measurement == "ratio") %>%  
+      ggplot() +
+      aes(x = reorder(alcohol_condition, value),
+          y = value,
+          fill = alcohol_condition) +
+      geom_col() +
+      theme_classic() +
+      labs(
+        title = "Reasons of longest stays",
+        x = "Condition",
+        y = "Stays per 100,000") +
+      theme(legend.position = "none") +
+  coord_flip() +
+  scale_y_continuous(breaks = c(0,300,600,900,1200,1500,1800,2100,2400,2700,
+                                3000, 3300))
+```
+
+```{r}
+both_health_data %>% 
+  filter(date_code == "2013/2014") %>% 
+  mutate(show_edge = feature_code == "S08000031") %>% 
+  filter(type_of_hospital == "General Acute Hospital") %>% 
+  ggplot(aes(fill = value_per_one_hundred_thousand_people,
+                                    geometry = geometry,
+             colour = show_edge)) +
+  geom_sf() +
+  theme_void() + 
+  labs(
+      fill = "Stays per 100,000 population"
+  ) + 
+  scale_color_manual(values=c("blue4", "yellow"), guide = "none") +
+  theme(
+  legend.title = element_text(color = "black", size = 14),
+  legend.text = element_text(color = "black", size = 10),
+  legend.position = "bottom"
+  ) +
+  scale_fill_viridis_c(option = "D", trans = "sqrt")
+```
+```{r}
+final_final_data <- full_join(final_data, health_board_simply, by = c("hb_assign" = "HBCode")) %>% 
+  filter(type_of_hospital == "general acute hospital")
+
+final_final_data
+```
+
+```{r}
+final_final_data %>% 
+  filter(year == "2018/2019") %>% 
+  mutate(show_edge = hb_assign == "S08000031") %>% 
+  filter(measurement == "count") %>% 
+  ggplot(aes(fill = value, geometry = geometry, colour = show_edge)) +
+  geom_sf() +
+  scale_fill_viridis_c(option = "D", trans = "sqrt") + 
+  scale_color_manual(values=c("blue4", "yellow"), guide = "none") +
+  theme_void() + 
+  labs(
+      fill = "Stays per 100,000 population"
+  )  +
+  theme(
+  legend.title = element_text(color = "black", size = 14),
+  legend.text = element_text(color = "black", size = 10),
+  legend.position = "right"
+  ) 
+```
+#Write geographic and normal data for 2nd tab
+```{r}
+write_csv(final_data, "alcoholic_clean_geo_data.csv")
+write_csv(final_final_data, "alcoholic_geographic_data.csv")
 ```
 
 
