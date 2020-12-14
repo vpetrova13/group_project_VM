@@ -5,6 +5,7 @@ output: html_notebook
 
 ```{r}
 library(tidyverse)
+library(janitor)
 library(sf)
 
 alc <- read_csv("~/Downloads/clean_alcohol_codes.csv")
@@ -131,11 +132,12 @@ final_data <- super_duper_data  %>%
 
 ```{r}
 unique(final_data$measurement)
+library(plotly)
 ```
 ```{r}
-final_data %>% 
+ggplotly(final_final_data %>% 
       filter(year == "2013/2014") %>%
-      filter(hb_assign == "S08000031") %>% 
+      filter(HBName == "Greater Glasgow and Clyde") %>% 
       filter(measurement == "ratio") %>%  
       ggplot() +
       aes(x = reorder(alcohol_condition, value),
@@ -150,7 +152,8 @@ final_data %>%
       theme(legend.position = "none") +
   coord_flip() +
   scale_y_continuous(breaks = c(0,300,600,900,1200,1500,1800,2100,2400,2700,
-                                3000, 3300))
+                                3000, 3300)) +
+      theme(text = element_text(size=13)))
 ```
 
 ```{r}
@@ -180,19 +183,31 @@ final_final_data <- full_join(final_data, health_board_simply, by = c("hb_assign
 
 final_final_data
 ```
+```{r}
+count_data <- final_data %>% 
+  filter(measurement == "count") %>% 
+  group_by(year, alcohol_condition, hb_assign, measurement) %>% 
+  summarise(total = sum(value)) 
+```
+```{r}
+write_csv(count_data, "clean_count_map.csv")
+```
 
 ```{r}
-final_final_data %>% 
+final_count_data <- full_join(count_data, health_board_simply, by = c("hb_assign" = "HBCode"))
+```
+
+```{r}
+final_count_data  %>% 
   filter(year == "2018/2019") %>% 
-  mutate(show_edge = hb_assign == "S08000031") %>% 
-  filter(measurement == "count") %>% 
-  ggplot(aes(fill = value, geometry = geometry, colour = show_edge)) +
+  mutate(show_edge = HBName == "Greater Glasgow and Clyde")  %>% 
+  ggplot(aes(fill = total, geometry = geometry, colour = show_edge)) +
   geom_sf() +
   scale_fill_viridis_c(option = "D", trans = "sqrt") + 
   scale_color_manual(values=c("blue4", "yellow"), guide = "none") +
   theme_void() + 
   labs(
-      fill = "Stays per 100,000 population"
+      fill = "Total stays"
   )  +
   theme(
   legend.title = element_text(color = "black", size = 14),
@@ -200,10 +215,20 @@ final_final_data %>%
   legend.position = "right"
   ) 
 ```
+
 #Write geographic and normal data for 2nd tab
 ```{r}
-write_csv(final_data, "alcoholic_clean_geo_data.csv")
-write_csv(final_final_data, "alcoholic_geographic_data.csv")
+#st_write(final_final_data, dsn = "alcoholic_geographic_data.shp", layer = #"alcoholic_geographic_data.shp", driver = "ESRI Shapefile")
 ```
+
+```{r}
+#check <- st_read("alcoholic_geographic_data.shp")
+#head(check)
+```
+#Write csv separately and join with geo file in global.
+```{r}
+write_csv(final_data, "alcohol_clean_for_map_data.csv")
+```
+
 
 
