@@ -215,16 +215,6 @@ final_count_data  %>%
   legend.position = "right"
   ) 
 ```
-
-#Write geographic and normal data for 2nd tab
-```{r}
-#st_write(final_final_data, dsn = "alcoholic_geographic_data.shp", layer = #"alcoholic_geographic_data.shp", driver = "ESRI Shapefile")
-```
-
-```{r}
-#check <- st_read("alcoholic_geographic_data.shp")
-#head(check)
-```
 #Write csv separately and join with geo file in global.
 ```{r}
 write_csv(final_data, "alcohol_clean_for_map_data.csv")

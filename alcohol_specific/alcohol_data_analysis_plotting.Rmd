@@ -138,14 +138,7 @@ head(nhs_health_boards)
 both_data <- left_join(alc_data, nhs_health_boards, by = c("feature_code" = "HBCode"))
 ```
 
-```{r}
-both_data %>% 
-  filter(units == "mean") %>% 
-  ggplot() +
-  aes(fill = value) +
-  geom_sf() +
-  theme_bw()
-```
+
 ```{r}
 library(tidyverse)
 library(sf)
